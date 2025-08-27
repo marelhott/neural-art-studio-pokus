@@ -1116,10 +1116,10 @@ with col_main:
     
     # Zpracování obrázku
     if process_button and input_image_file is not None and (st.session_state.current_model_file is not None or st.session_state.current_model_path is not None or st.session_state.uploaded_model_file is not None):
-        # Kompaktní progress tracking - tři pruhy vedle sebe
+        # Kompaktní progress tracking - dva pruhy vedle sebe
         with progress_container:
-            # Tři sloupce pro progress pruhy
-            prog_col1, prog_col2, prog_col3 = st.columns(3)
+            # Dva sloupce pro progress pruhy
+            prog_col1, prog_col2 = st.columns(2)
             
             with prog_col1:
                 st.markdown("**Načítání modelu**")
@@ -1130,40 +1130,23 @@ with col_main:
                 st.markdown("**Generování obrázku**")
                 generate_progress = st.progress(0)
                 generate_percent = st.empty()
-            
-            with prog_col3:
-                st.markdown("**Upscaling**")
-                upscale_progress = st.progress(0)
-                upscale_percent = st.empty()
         
         start_time = time.time()
         
         def update_progress(progress: float, text: str = ""):
-            # Mapování progress na jednotlivé fáze
-            if progress < 0.2:  # Načítání modelu (0-20%)
-                model_prog = min(1.0, progress / 0.2)
+            # Mapování progress na dvě fáze
+            if progress < 0.5:  # Načítání modelu (0-50%)
+                model_prog = min(1.0, progress / 0.5)
                 model_progress.progress(model_prog)
                 model_percent.text(f"{model_prog*100:.0f}%")
                 generate_progress.progress(0)
                 generate_percent.text("0%")
-                upscale_progress.progress(0)
-                upscale_percent.text("0%")
-            elif progress < 0.85:  # Generování (20-85%)
+            else:  # Generování (50-100%)
                 model_progress.progress(1.0)
                 model_percent.text("100%")
-                gen_prog = (progress - 0.2) / 0.65
+                gen_prog = min(1.0, (progress - 0.5) / 0.5)
                 generate_progress.progress(gen_prog)
                 generate_percent.text(f"{gen_prog*100:.0f}%")
-                upscale_progress.progress(0)
-                upscale_percent.text("0%")
-            else:  # Upscaling (85-100%)
-                model_progress.progress(1.0)
-                model_percent.text("100%")
-                generate_progress.progress(1.0)
-                generate_percent.text("100%")
-                up_prog = (progress - 0.85) / 0.15
-                upscale_progress.progress(up_prog)
-                upscale_percent.text(f"{up_prog*100:.0f}%")
 
         
         try:
